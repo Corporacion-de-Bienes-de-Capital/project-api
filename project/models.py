@@ -1,0 +1,5 @@
+# Este archivo permite que Django descubra los modelos situados en infrastructure/django_models
+from .infrastructure.django_models.proyecto import ProyectoORM
+from .infrastructure.django_models.empresa import EmpresaORM
+
+__all__ = ["ProyectoORM", "EmpresaORM"]
