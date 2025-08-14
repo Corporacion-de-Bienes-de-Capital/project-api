@@ -1,0 +1,21 @@
+# Framework principal para construir la API REST
+Django==4.2
+
+# Extensión para Django que facilita la creación de APIs REST
+djangorestframework
+
+# Manejo de variables de entorno desde archivos .env
+python-dotenv
+
+# Conector para MariaDB/MySQL
+mysqlclient
+
+# Conector para PostgreSQL
+psycopg2-binary
+
+# Manejo estructurado de configuraciones y variables de entorno
+django-environ
+
+# Generación de documentación OpenAPI/Swagger
+drf-spectacular
+
