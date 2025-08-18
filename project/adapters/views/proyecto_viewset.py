@@ -2,10 +2,15 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 from project.domain.services.proyecto_service import ProyectoService
+from project.infrastructure.django_models.proyecto import ProyectoORM
 from project.api.serializers.proyectoserializer import ProyectoSerializer
 from rest_framework.decorators import action
 
-class ProyectoViewSet(viewsets.ViewSet):
+
+class ProyectoViewSet(viewsets.ModelViewSet):
+    queryset = ProyectoORM.objects.filter(is_deleted=0)
+    serializer_class = ProyectoSerializer
+
     # sólo endpoints de lectura
     def list(self, request):
         repo = ProyectoRepositoryImpl()
@@ -22,3 +27,6 @@ class ProyectoViewSet(viewsets.ViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = ProyectoSerializer(proyecto)
         return Response(serializer.data)
+    def get_view_name(self):
+        return "Lista de Proyectos"
+    
