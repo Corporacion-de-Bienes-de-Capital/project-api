@@ -74,7 +74,10 @@ class EmpresaViewSet(viewsets.ViewSet):
         except EmpresaORM.DoesNotExist:
             return Response({'error': 'Empresa no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         proyectos = ProyectoORM.objects.filter(empresa_id=pk, is_deleted=0)
-        lista_proyectos = [p.pro_nombre for p in proyectos]
+        lista_proyectos = [
+            {'pro_id': p.pro_id, 'pro_nombre': p.pro_nombre}
+            for p in proyectos
+        ]
         data = {
             'empr_nombre': empresa.empr_nombre,
             'proyectos': lista_proyectos
