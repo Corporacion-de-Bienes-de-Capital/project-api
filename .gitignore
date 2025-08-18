@@ -1,0 +1,22 @@
+# Ignore all files ending with .log
+*.log
+
+# Ignore a specific file named 'config.local.js'
+config.local.js
+
+# Ignore the entire 'node_modules' directory
+node_modules/
+
+# Ignore all files within the 'build' directory at any level
+build/
+
+# Ignore all files with the '.tmp' extension anywhere in the repository
+**/*.tmp
+
+# Do not ignore 'important.log' even if it matches a previous pattern
+!important.log
+
+# Ignorar todos los archivos y carpetas __pycache__ en cualquier parte del proyecto
+__pycache__/
+**/__pycache__/
+**/__pycache__/*
