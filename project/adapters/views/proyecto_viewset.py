@@ -2,16 +2,31 @@ from rest_framework import viewsets, status
 from rest_framework.response import Response
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 from project.domain.services.proyecto_service import ProyectoService
-from project.infrastructure.django_models.proyecto import ProyectoORM
 from project.api.serializers.proyectoserializer import ProyectoSerializer
 from rest_framework.decorators import action
+from project.infrastructure.repository.empresa_repository_impl import EmpresaRepositoryImpl
+from project.domain.services.empresa_service import EmpresaService
+from project.api.serializers.empresa_serializer import EmpresaSerializer
 
+class EmpresaViewSet(viewsets.ViewSet):
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.repo = EmpresaRepositoryImpl()
+        self.servicio = EmpresaService(self.repo)
+    
+    def list(self, request):
+        empresas = self.servicio.listar_empresas()
+        serializer = EmpresaSerializer(empresas, many=True)
+        return Response(serializer.data)
 
-class ProyectoViewSet(viewsets.ModelViewSet):
-    queryset = ProyectoORM.objects.filter(is_deleted=0)
-    serializer_class = ProyectoSerializer
-
-    # sólo endpoints de lectura
+    def retrieve(self, request, pk=None):
+        empresa = self.servicio.obtener(int(pk))
+        if empresa is None:
+            return Response(status=status.HTTP_404_NOT_FOUND)
+        serializer = EmpresaSerializer(empresa)
+        return Response(serializer.data)
+    
+class ProyectoViewSet(viewsets.ViewSet):
     def list(self, request):
         repo = ProyectoRepositoryImpl()
         servicio = ProyectoService(repo)
@@ -27,6 +42,3 @@ class ProyectoViewSet(viewsets.ModelViewSet):
             return Response(status=status.HTTP_404_NOT_FOUND)
         serializer = ProyectoSerializer(proyecto)
         return Response(serializer.data)
-    def get_view_name(self):
-        return "Lista de Proyectos"
-    

@@ -66,11 +66,19 @@ class EmpresaViewSet(viewsets.ViewSet):
     @action(detail=True, methods=['get'], url_path='proyectos')
     def proyectos_por_empresa(self, request, pk=None):
         """
-        Lista todos los proyectos asociados a una empresa usando solo el ID en la URL.
+        Devuelve solo el nombre de la empresa y una lista de nombres de proyectos asociados.
         Ejemplo: /empresas/13/proyectos/
         """
+        try:
+            empresa = EmpresaORM.objects.get(empr_id=pk)
+        except EmpresaORM.DoesNotExist:
+            return Response({'error': 'Empresa no encontrada'}, status=status.HTTP_404_NOT_FOUND)
         proyectos = ProyectoORM.objects.filter(empresa_id=pk, is_deleted=0)
-        serializer = ProyectoSerializer(proyectos, many=True)
-        return Response(serializer.data)
+        lista_proyectos = [p.pro_nombre for p in proyectos]
+        data = {
+            'empr_nombre': empresa.empr_nombre,
+            'proyectos': lista_proyectos
+        }
+        return Response(data)
     
     
