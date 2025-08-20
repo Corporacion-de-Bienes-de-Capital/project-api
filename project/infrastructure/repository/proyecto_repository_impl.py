@@ -10,7 +10,11 @@ class ProyectoRepositoryImpl(IProyectoRepository):
         empresa = None
         if getattr(orm, 'empresa', None):
             e = orm.empresa
-            empresa = Empresa(id=e.empr_id, nombre=e.empr_nombre)
+            empresa = Empresa(
+                id=e.empr_id,
+                nombre=e.empr_nombre,
+                empr_rut=getattr(e, 'empr_rut', None)
+            )
         return Proyecto(id=orm.pro_id, nombre=orm.pro_nombre, empresa=empresa)
 
     def list_all(self) -> List[Proyecto]:

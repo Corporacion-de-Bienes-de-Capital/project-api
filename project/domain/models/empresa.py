@@ -4,3 +4,4 @@ from dataclasses import dataclass
 class Empresa:
     id: int
     nombre: str
+    empr_rut: str

@@ -3,12 +3,14 @@ from project.domain.ports.empresa_repository import IEmpresaRepository
 from project.domain.models.empresa import Empresa
 from project.infrastructure.django_models.empresa import EmpresaORM
 
+
 class EmpresaRepositoryImpl(IEmpresaRepository):
 
     def _orm_to_domain(self, orm: EmpresaORM) -> Empresa:
         return Empresa(
             id=orm.empr_id, 
-            nombre=orm.empr_nombre
+            nombre=orm.empr_nombre,
+            empr_rut=orm.empr_rut
         )
 
     def list_all(self) -> List[Empresa]:

@@ -27,6 +27,14 @@ class EmpresaViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     def get_view_name(self):
+        action = getattr(self, 'action', None)
+        # Cambia el nombre de la opción en Extra Actions según la acción
+        if action == 'empresas_sin_proyectos':
+            if self.request and self.request.path.endswith('/sin-proyectos/'):
+                return "Empresas sin proyecto"
+            return "Empresas sin proyecto"
+        if action == 'empresas_con_proyectos':
+            return "Empresas con proyecto"
         return "Lista de Empresas"
     
         #Lista todos los proyectos asociados a una empresa específica.

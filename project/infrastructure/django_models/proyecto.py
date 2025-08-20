@@ -1,5 +1,6 @@
 from django.db import models
 from .empresa import EmpresaORM
+from .estado_pro import EstadoProyectoORM 
 
 class ProyectoORM(models.Model):
     pro_id = models.AutoField(primary_key=True)
@@ -10,7 +11,7 @@ class ProyectoORM(models.Model):
     region_incidencia_proyecto = models.TextField(null=True, blank=True)
     pro_monto_inversion = models.FloatField(null=True, blank=True)
     pro_descripcion = models.TextField(null=True, blank=True)
-    pro_estado = models.IntegerField(null=True, blank=True)
+    
     tinv_id = models.PositiveIntegerField(null=True, blank=True)
     seco_id = models.PositiveIntegerField(null=True, blank=True)
     tplo_id = models.PositiveIntegerField(null=True, blank=True)
@@ -37,6 +38,13 @@ class ProyectoORM(models.Model):
     desaladora = models.IntegerField(default=0)
     codigo_bip = models.CharField(max_length=255, null=True, blank=True)
     codigo_sea = models.CharField(max_length=50, null=True, blank=True)
+    pro_estado = models.ForeignKey(
+        EstadoProyectoORM,
+        on_delete=models.DO_NOTHING,
+        db_column='pro_estado',
+        null=True,
+        blank=True
+    )
     
     # Relación con empresa
     empresa = models.ForeignKey(
