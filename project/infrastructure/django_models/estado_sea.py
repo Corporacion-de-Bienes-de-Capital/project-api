@@ -9,3 +9,4 @@ class EstadoSeaORM(models.Model):
     class Meta:
         db_table = 'tbl_estado_sea'
         managed = False
+        app_label = 'project'

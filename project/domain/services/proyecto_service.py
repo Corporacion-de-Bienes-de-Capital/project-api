@@ -1,6 +1,7 @@
 from typing import List
 from project.domain.ports.proyecto_repository import IProyectoRepository
 from project.domain.models.proyecto import Proyecto
+from project.infrastructure.django_models.proyecto import ProyectoORM
 
 class ProyectoService:
     def __init__(self, repo: IProyectoRepository):
@@ -10,7 +11,7 @@ class ProyectoService:
         return self.repo.list_all()
 
     def listar_proyectos_con_empresas(self) -> List[Proyecto]:
-        return self.repo.list_with_companies()
+        return ProyectoORM.objects.all()
 
     def obtener(self, pk: int) -> Proyecto | None:
         return self.repo.get_by_id(pk)

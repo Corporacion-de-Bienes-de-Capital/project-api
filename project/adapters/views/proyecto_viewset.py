@@ -8,6 +8,8 @@ from project.domain.services.empresa_service import EmpresaService
 from project.api.serializers.empresa_serializer import EmpresaSerializer
 from project.infrastructure.django_models.proyecto import ProyectoORM
 from project.api.serializers.proyectoserializer import ProyectoORMSerializer
+from project.api.serializers.proyectoserializer import ProyectoListaSerializer
+from rest_framework.decorators import action
 
 class EmpresaViewSet(viewsets.ViewSet):
     def __init__(self, **kwargs):
@@ -34,7 +36,7 @@ class ProyectoViewSet(viewsets.ViewSet):
         repo = ProyectoRepositoryImpl()
         servicio = ProyectoService(repo)
         proyectos = servicio.listar_proyectos_con_empresas()
-        serializer = ProyectoSerializer(proyectos, many=True)
+        serializer = ProyectoListaSerializer(proyectos, many=True)
         return Response(serializer.data)
 
     def retrieve(self, request, pk=None):
@@ -43,4 +45,14 @@ class ProyectoViewSet(viewsets.ViewSet):
         except ProyectoORM.DoesNotExist:
             return Response({'error': 'Proyecto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         serializer = ProyectoORMSerializer(proyecto)
+        return Response(serializer.data)
+    
+    
+    @action(detail=True, methods=['get'], url_path='estado')
+    def estado(self, request, pk=None):
+        try:
+            proyecto = ProyectoORM.objects.get(pk=pk)
+        except ProyectoORM.DoesNotExist:
+            return Response({'error': 'Proyecto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
+        serializer = ProyectoSerializer(proyecto)
         return Response(serializer.data)

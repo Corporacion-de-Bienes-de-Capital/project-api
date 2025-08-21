@@ -56,6 +56,15 @@ class ProyectoORM(models.Model):
         null=True,
         blank=True
     )
+    # Relación con Estado SEA
+    esea = models.ForeignKey(
+    'project.EstadoSeaORM',  # 'project' es el app_label, 'EstadoSeaORM' es el modelo
+    on_delete=models.DO_NOTHING,
+    db_column='esea_id',
+    null=True,
+    blank=True
+)
+
 
     class Meta:
         db_table = 'tbl_proyecto'

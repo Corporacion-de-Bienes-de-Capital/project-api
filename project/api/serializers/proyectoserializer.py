@@ -23,6 +23,7 @@ class ProyectoSerializer(serializers.Serializer):
         estado_nombre = getattr(getattr(instance, 'pro_estado', None), 'estado_nombre', None)
         data['pro_estado'] = getattr(instance, 'pro_estado_id', None)  # el id del estado
         data['estado_nombre'] = estado_nombre  # el nombre del estado
+        
 
         if empresa_obj:
             # Buscar id y nombre de la empresa, usando ambos posibles nombres
@@ -35,8 +36,35 @@ class ProyectoSerializer(serializers.Serializer):
         else:
             data['empresa'] = None
 
+    
+
+        # Agrega aquí los datos de estado SEA
+        esea_obj = getattr(instance, 'esea', None)
+        if esea_obj:
+            esea_id = getattr(esea_obj, 'esea_id', None)
+            esea_nombre = getattr(esea_obj, 'esea_nombre', None)
+            data['esea_id'] = esea_id
+            data['esea_nombre'] = esea_nombre
+        else:
+            data['esea_id'] = None
+            data['esea_nombre'] = None
+    
+        esea_obj = getattr(instance, 'esea', None)
+        if esea_obj:
+            data['esea_id'] = getattr(esea_obj, 'esea_id', None)
+            data['esea_nombre'] = getattr(esea_obj, 'esea_nombre', None)
+        else:
+            data['esea_id'] = None
+            data['esea_nombre'] = None
+
+
         return data
 class ProyectoORMSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoORM
         fields = '__all__'
+
+class ProyectoListaSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ProyectoORM  # o el modelo que corresponda
+        fields = ['pro_id', 'pro_nombre']
