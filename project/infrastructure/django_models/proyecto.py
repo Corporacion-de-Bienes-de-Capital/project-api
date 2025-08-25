@@ -2,6 +2,7 @@ from django.db import models
 from .empresa import EmpresaORM
 from .estado_pro import EstadoProyectoORM 
 
+
 class ProyectoORM(models.Model):
     pro_id = models.AutoField(primary_key=True)
     pro_nombre = models.TextField(null=True, blank=True)
@@ -38,6 +39,8 @@ class ProyectoORM(models.Model):
     desaladora = models.IntegerField(default=0)
     codigo_bip = models.CharField(max_length=255, null=True, blank=True)
     codigo_sea = models.CharField(max_length=50, null=True, blank=True)
+
+    # Relación con estado de proyecto
     pro_estado = models.ForeignKey(
         EstadoProyectoORM,
         on_delete=models.DO_NOTHING,
@@ -56,14 +59,8 @@ class ProyectoORM(models.Model):
         null=True,
         blank=True
     )
-    # Relación con Estado SEA
-    esea = models.ForeignKey(
-    'project.EstadoSeaORM',  # 'project' es el app_label, 'EstadoSeaORM' es el modelo
-    on_delete=models.DO_NOTHING,
-    db_column='esea_id',
-    null=True,
-    blank=True
-)
+
+    
 
 
     class Meta:

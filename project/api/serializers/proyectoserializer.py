@@ -1,6 +1,8 @@
 from rest_framework import serializers
 from .empresa_serializer import EmpresaSerializer
 from project.infrastructure.django_models.proyecto import ProyectoORM
+from project.infrastructure.django_models.medio_ambiente import MedioAmbienteORM
+
 
 class ProyectoSerializer(serializers.Serializer):
     pro_id = serializers.IntegerField(required=False)
@@ -36,29 +38,25 @@ class ProyectoSerializer(serializers.Serializer):
         else:
             data['empresa'] = None
 
-    
 
-        # Agrega aquí los datos de estado SEA
-        esea_obj = getattr(instance, 'esea', None)
-        if esea_obj:
-            esea_id = getattr(esea_obj, 'esea_id', None)
-            esea_nombre = getattr(esea_obj, 'esea_nombre', None)
-            data['esea_id'] = esea_id
-            data['esea_nombre'] = esea_nombre
+        proyecto = ProyectoORM.objects.get(pk=11596)
+        medio_ambientes = MedioAmbienteORM.objects.filter(pro=proyecto)
+        for m in medio_ambientes:
+            print(m.mamb_id, m.esea_id, m.esea.esea_nombre)
+
+        # Estado SEA (trae los campos esea_id y esea_nombre desde MedioAmbienteORM relacionado)
+        medio_ambiente_obj = MedioAmbienteORM.objects.filter(pro=instance).first()
+        if medio_ambiente_obj and medio_ambiente_obj.esea:
+            data['esea_id'] = medio_ambiente_obj.esea.esea_id
+            data['esea_nombre'] = medio_ambiente_obj.esea.esea_nombre
         else:
             data['esea_id'] = None
             data['esea_nombre'] = None
-    
-        esea_obj = getattr(instance, 'esea', None)
-        if esea_obj:
-            data['esea_id'] = getattr(esea_obj, 'esea_id', None)
-            data['esea_nombre'] = getattr(esea_obj, 'esea_nombre', None)
-        else:
-            data['esea_id'] = None
-            data['esea_nombre'] = None
-
 
         return data
+
+
+        
 class ProyectoORMSerializer(serializers.ModelSerializer):
     class Meta:
         model = ProyectoORM
