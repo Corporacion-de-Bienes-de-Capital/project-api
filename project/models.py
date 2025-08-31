@@ -2,5 +2,6 @@
 from .infrastructure.django_models.proyecto import ProyectoORM
 from .infrastructure.django_models.empresa import EmpresaORM
 from .infrastructure.django_models.estado_sea import EstadoSeaORM
+from .infrastructure.django_models.medio_ambiente import MedioAmbienteORM
 
 __all__ = ["ProyectoORM", "EmpresaORM"]

@@ -13,25 +13,27 @@ class MedioAmbienteORM(models.Model):
     mamb_dias_legales = models.CharField(max_length=255, null=True, blank=True)
     mamb_dias_totales = models.CharField(max_length=255, null=True, blank=True)
     ppro_id = models.IntegerField(null=True, blank=True)
-    pro = models.ForeignKey(
-        ProyectoORM,
-        on_delete=models.DO_NOTHING,
-        db_column='pro_id',
-        related_name='medioambientes' # <-- así defines el nombre
-    )
-    esea = models.ForeignKey(
-        EstadoSeaORM,
-        on_delete=models.DO_NOTHING,
-        db_column='esea_id'
-    )
-  
-    
     mamb_enlace_sea = models.CharField(max_length=255, null=True, blank=True)
     is_history = models.IntegerField(null=True, blank=True)
     is_deleted = models.IntegerField(null=True, blank=True)
     mamb_fecha_calificacion = models.IntegerField(null=True, blank=True)
     mamb_descripcion = models.TextField(null=True, blank=True)
 
+    # Relación con ProyectoORM
+    pro_id = models.ForeignKey(
+        ProyectoORM,
+        on_delete=models.DO_NOTHING,
+        db_column='pro_id',
+        related_name='medioambiente' # <-- así defines el nombre
+    )
+
+    # Relación con EstadoSeaORM
+    esea = models.ForeignKey(
+        EstadoSeaORM,
+        on_delete=models.DO_NOTHING,
+        db_column='esea_id'
+    )
+
     class Meta:
-        db_table = 'tbl_medio_ambiente'
+        db_table = 'view_last_medio_ambiente'
         managed = False
