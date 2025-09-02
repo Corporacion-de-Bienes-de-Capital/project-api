@@ -17,6 +17,8 @@ from project.infrastructure.django_models.sector_economico import SectorEconomic
 from project.infrastructure.repository.empresa_repository_impl import EmpresaRepositoryImpl
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 
+from project.infrastructure.cosmosdb_service import log_event
+
 
 
 
@@ -27,6 +29,12 @@ class ProyectoViewSet(viewsets.ViewSet):
     
 
     def list(self, request):
+        log_event(
+            user=request.user,
+            endpoint=request.path,
+            method=request.method,
+            extra={"query_params": dict(request.query_params)}
+        )
         repo = ProyectoRepositoryImpl()
         servicio = ProyectoService(repo)
         proyectos = servicio.listar_proyectos_con_empresas()
@@ -54,6 +62,14 @@ class ProyectoViewSet(viewsets.ViewSet):
     
     @action(detail=False, methods=['get'], url_path='sector-economico/(?P<parametro>[^/.]+)')
     def listar_por_sector_economico(self, request, parametro=None):
+
+            # Loguea el evento de acceso
+        log_event(
+        user=request.user,
+        endpoint=request.path,
+        method=request.method,
+        extra={"parametro": parametro, "query_params": dict(request.query_params)}
+        )
         """
         Endpoint para listar proyectos filtrados por el slug del sector económico.
         """

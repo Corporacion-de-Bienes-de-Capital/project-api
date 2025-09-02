@@ -19,3 +19,9 @@ django-environ
 # Generación de documentación OpenAPI/Swagger
 drf-spectacular
 
+#Extensión para trabajar con Emulador de Cosmos DB de Azure
+azure-cosmos
+
+#Zona horaria
+pytz
+

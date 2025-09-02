@@ -1,7 +1,12 @@
 from pathlib import Path
 import os
-
 from dotenv import load_dotenv 
+
+#Ocultar warnings de certificados SSL no verificados
+
+import urllib3
+urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
+
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
