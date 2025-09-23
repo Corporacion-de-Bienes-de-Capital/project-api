@@ -39,23 +39,23 @@ def log_event(user, endpoint, method, extra=None):
 
 
 # def log_api_access(request):
-    ip = request.META.get("HTTP_X_FORWARDED_FOR")
-    if ip:
-        ip = ip.split(",")[0].strip()
-    else:
-        ip = request.META.get("REMOTE_ADDR", None)
+#     ip = request.META.get("HTTP_X_FORWARDED_FOR")
+#     if ip:
+#         ip = ip.split(",")[0].strip()
+#     else:
+#         ip = request.META.get("REMOTE_ADDR", None)
 
-    extra = {
-        "user_pk": getattr(request.user, "pk", None),
-        "username": getattr(request.user, "username", str(request.user)),
-        "ip": ip,
-        "query_params": dict(request.query_params),
-        "body": request.data if hasattr(request, "data") else None
-    }
-    log_event(
-        user=request.user,
-        endpoint=request.path,
-        method=request.method,
-        extra=extra
-    )
+#     extra = {
+#         "user_pk": getattr(request.user, "pk", None),
+#         "username": getattr(request.user, "username", str(request.user)),
+#         "ip": ip,
+#         "query_params": dict(request.query_params),
+#         "body": request.data if hasattr(request, "data") else None
+#     }
+#     log_event(
+#         user=request.user,
+#         endpoint=request.path,
+#         method=request.method,
+#         extra=extra
+#     )
     
