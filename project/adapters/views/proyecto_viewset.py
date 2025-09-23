@@ -18,6 +18,8 @@ from project.infrastructure.repository.empresa_repository_impl import EmpresaRep
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 
 from project.infrastructure.cosmosdb_service import log_event
+from project.infrastructure.cosmosdb_service import log_api_access
+import pytz
 
 
 
@@ -60,16 +62,32 @@ class ProyectoViewSet(viewsets.ViewSet):
     #     serializer = ProyectoSerializer(proyecto)
     #     return Response(serializer.data)
     
+
+    #Listar proyectos por sector económico usando slug
     @action(detail=False, methods=['get'], url_path='sector-economico/(?P<parametro>[^/.]+)')
     def listar_por_sector_economico(self, request, parametro=None):
+        
+    # Registrar el evento en CosmosDB
+        ip = request.META.get("HTTP_X_FORWARDED_FOR")
+        if ip:
+            ip = ip.split(",")[0].strip()
+        else:
+            ip = request.META.get("REMOTE_ADDR", None)
 
-            # Loguea el evento de acceso
+        extra = {
+            "user_pk": getattr(request.user, "pk", None),
+            "username": getattr(request.user, "username", str(request.user)),
+            "ip": ip,
+            "query_params": dict(request.query_params),
+            "body": request.data if hasattr(request, "data") else None
+        }
         log_event(
-        user=request.user,
-        endpoint=request.path,
-        method=request.method,
-        extra={"parametro": parametro, "query_params": dict(request.query_params)}
+            user=request.user,
+            endpoint=request.path,
+            method=request.method,
+            extra=extra
         )
+        
         """
         Endpoint para listar proyectos filtrados por el slug del sector económico.
         """
