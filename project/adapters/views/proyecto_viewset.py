@@ -18,7 +18,7 @@ from project.infrastructure.repository.empresa_repository_impl import EmpresaRep
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 
 from project.infrastructure.cosmosdb_service import log_event
-from project.infrastructure.cosmosdb_service import log_api_access
+
 import pytz
 
 
