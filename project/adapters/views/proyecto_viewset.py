@@ -12,7 +12,21 @@ from project.api.serializers.proyectoserializer import ProyectoORMSerializer
 from project.api.serializers.proyectoserializer import ProyectoListaSerializer
 
 from project.infrastructure.django_models.proyecto import ProyectoORM
+from project.infrastructure.django_models.proyecto import ProyectoORM
+from project.infrastructure.django_models.empresa import EmpresaORM
+from project.infrastructure.django_models.estado_pro import EstadoProyectoORM
+from project.infrastructure.django_models.tipo_inversion import TipoInversionORM
 from project.infrastructure.django_models.sector_economico import SectorEconomicoORM
+from project.infrastructure.django_models.tipologias import TipologiasORM
+from project.infrastructure.django_models.tipo_proyecto import TipoProyectoORM
+from project.infrastructure.django_models.generacion_distribuida import GeneracionDistribuidaORM
+from project.infrastructure.django_models.relacion_hidrogeno import RelacionHidrogenoORM
+from project.infrastructure.django_models.estatus_contingencia import EstatusContingenciaORM
+from project.infrastructure.django_models.pais import PaisORM
+from project.infrastructure.django_models.region import RegionORM
+from project.infrastructure.django_models.provincias import ProvinciasORM
+from project.infrastructure.django_models.comunas import ComunasORM
+
 
 from project.infrastructure.repository.empresa_repository_impl import EmpresaRepositoryImpl
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
@@ -30,6 +44,7 @@ class ProyectoViewSet(viewsets.ViewSet):
     
 
     def list(self, request):
+        # Inicio Registrar el Log en CosmosDB
         ip = request.META.get("HTTP_X_FORWARDED_FOR")
         if ip:
             ip = ip.split(",")[0].strip()
@@ -49,6 +64,8 @@ class ProyectoViewSet(viewsets.ViewSet):
             method=request.method,
             extra=extra
         )
+        #Cierrar Registrar el log en CosmosDB
+        
         repo = ProyectoRepositoryImpl()
         servicio = ProyectoService(repo)
         proyectos = servicio.listar_proyectos_con_empresas()
@@ -66,33 +83,108 @@ class ProyectoViewSet(viewsets.ViewSet):
     
     
     #Recibir, validar y guardar datos enviados por POST
+
     def create(self, request):
-        #return Response({"mensaje": "POST recibido", "data": request.data}, status=201)
-        proyectos = request.data  #Recibir base de proyectos JSON
+        # Mapeo de campos ForeignKey a sus modelos
+        FK_MODEL_MAP = {
+            'pro_estado': EstadoProyectoORM,
+            'empresa': EmpresaORM,
+            'tinv_id': TipoInversionORM,
+            'seco_id': SectorEconomicoORM,
+            'tplo_id': TipologiasORM,
+            'tpro_id': TipoProyectoORM,
+            'dist_id': GeneracionDistribuidaORM,
+            'relacion_hidrogeno_id': RelacionHidrogenoORM,
+            'estatus_cont_id': EstatusContingenciaORM,
+            'pais_id': PaisORM,
+            'reg_id': RegionORM,
+            'prov_id': ProvinciasORM,
+            'comu_id': ComunasORM,
+        }
 
-        #Validar integridad de base JSON
-        if not isinstance(proyectos, list):
-            return Response({"error": "Se esperaba una lista de proyectos"}, status=400)
+        def obtener_instancia_fk(campo, valor):
+            modelo = FK_MODEL_MAP.get(campo)
+            if modelo and valor not in [None, '', 0]:
+                try:
+                    return modelo.objects.get(pk=valor)
+                except modelo.DoesNotExist:
+                    return None
+            return None
 
-        resultados = []
-        for proyecto in proyectos:  #Recorrer base de proyectos
-            pro_id = proyecto.get('pro_id')
-            pro_nombre = proyecto.get('pro_nombre')
-            if not pro_id or not pro_nombre:
-                resultados.append({"pro_id": pro_id, "status": "error", "detalle": "Faltan campos obligatorios"})
-                continue
+        try:
+            proyectos = request.data  #Recibir base de proyectos JSON
+            if not isinstance(proyectos, list):
+                proyectos = [proyectos]
 
-            #¿Proyecto existe en BD?
-            obj, creado = ProyectoORM.objects.update_or_create(
-                pro_id=pro_id,
-                defaults={"pro_nombre": pro_nombre}
-            )
-            if creado:
-                resultados.append({"pro_id": pro_id, "status": "creado"})
-            else:
-                resultados.append({"pro_id": pro_id, "status": "actualizado"})
+            resultados = []
+            campos_requeridos = [
+                "pro_id", "pro_nombre", "pro_producto", "pro_capacidad_produccion", "pro_ubicacion",
+                "region_incidencia_proyecto", "pro_monto_inversion", "pro_descripcion", "is_covid_affected",
+                "is_green_hydrogen", "relacion_hidrogeno_id", "is_deleted", "created_at", "edited_at",
+                "user_created_at", "user_edited_at", "comu_id", "pro_cron_fecha", "pro_diferido",
+                "confidencial", "mindha", "sea_afectado", "desaladora", "codigo_bip", "codigo_sea",
+                "pro_estado", "empr_id", "tinv_id", "seco_id", "tplo_id", "tpro_id", "dist_id",
+                "estatus_cont_id", "pais_id", "reg_id", "prov_id"
+            ]
+            for proyecto in proyectos:
+                # Validar que todos los campos estén presentes
+                if not all(campo in proyecto for campo in campos_requeridos):
+                    proyecto_resultado = proyecto.copy()
+                    proyecto_resultado["status"] = "error"
+                    proyecto_resultado["detalle"] = "Faltan campos obligatorios"
+                    resultados.append(proyecto_resultado)
+                    continue
 
-        return Response({"resultado": resultados}, status=201)
+                pro_id = proyecto.get('pro_id')
+                defaults = {
+                    "pro_nombre": proyecto.get('pro_nombre'),
+                    "pro_producto": proyecto.get('pro_producto'),
+                    "pro_capacidad_produccion": proyecto.get('pro_capacidad_produccion'),
+                    "pro_ubicacion": proyecto.get('pro_ubicacion'),
+                    "region_incidencia_proyecto": proyecto.get('region_incidencia_proyecto'),
+                    "pro_monto_inversion": proyecto.get('pro_monto_inversion'),
+                    "pro_descripcion": proyecto.get('pro_descripcion'),
+                    "is_covid_affected": proyecto.get('is_covid_affected'),
+                    "is_green_hydrogen": proyecto.get('is_green_hydrogen'),
+                    "relacion_hidrogeno_id": obtener_instancia_fk('relacion_hidrogeno_id', proyecto.get('relacion_hidrogeno_id')),
+                    "is_deleted": proyecto.get('is_deleted'),
+                    "created_at": proyecto.get('created_at'),
+                    "edited_at": proyecto.get('edited_at'),
+                    "user_created_at": proyecto.get('user_created_at'),
+                    "user_edited_at": proyecto.get('user_edited_at'),
+                    "comu_id": obtener_instancia_fk('comu_id', proyecto.get('comu_id')),
+                    "pro_cron_fecha": proyecto.get('pro_cron_fecha'),
+                    "pro_diferido": proyecto.get('pro_diferido'),
+                    "confidencial": proyecto.get('confidencial'),
+                    "mindha": proyecto.get('mindha'),
+                    "sea_afectado": proyecto.get('sea_afectado'),
+                    "desaladora": proyecto.get('desaladora'),
+                    "codigo_bip": proyecto.get('codigo_bip'),
+                    "codigo_sea": proyecto.get('codigo_sea'),
+                    "pro_estado": obtener_instancia_fk('pro_estado', proyecto.get('pro_estado')),
+                    "empresa": obtener_instancia_fk('empresa', proyecto.get('empr_id')),
+                    "tinv_id": obtener_instancia_fk('tinv_id', proyecto.get('tinv_id')),
+                    "seco_id": obtener_instancia_fk('seco_id', proyecto.get('seco_id')),
+                    "tplo_id": obtener_instancia_fk('tplo_id', proyecto.get('tplo_id')),
+                    "tpro_id": obtener_instancia_fk('tpro_id', proyecto.get('tpro_id')),
+                    "dist_id": obtener_instancia_fk('dist_id', proyecto.get('dist_id')),
+                    "estatus_cont_id": obtener_instancia_fk('estatus_cont_id', proyecto.get('estatus_cont_id')),
+                    "pais_id": obtener_instancia_fk('pais_id', proyecto.get('pais_id')),
+                    "reg_id": obtener_instancia_fk('reg_id', proyecto.get('reg_id')),
+                    "prov_id": obtener_instancia_fk('prov_id', proyecto.get('prov_id')),
+                }
+
+                obj, creado = ProyectoORM.objects.update_or_create(
+                    pro_id=pro_id,
+                    defaults=defaults
+                )
+                proyecto_resultado = proyecto.copy()
+                proyecto_resultado["status"] = "creado" if creado else "actualizado"
+                resultados.append(proyecto_resultado)
+
+            return Response({"resultado": resultados}, status=201)
+        except Exception as e:
+            return Response({"error": str(e)}, status=500)
     
 
 
@@ -132,7 +224,7 @@ class ProyectoViewSet(viewsets.ViewSet):
             method=request.method,
             extra=extra
         )
-        
+    #Cerrar Registrar el log en CosmosDB    
         """
         Endpoint para listar proyectos filtrados por el slug del sector económico.
         """
