@@ -18,7 +18,6 @@ from project.infrastructure.repository.empresa_repository_impl import EmpresaRep
 from project.infrastructure.repository.proyecto_repository_impl import ProyectoRepositoryImpl
 
 from project.infrastructure.cosmosdb_service import log_event
-
 import pytz
 
 
@@ -31,11 +30,24 @@ class ProyectoViewSet(viewsets.ViewSet):
     
 
     def list(self, request):
+        ip = request.META.get("HTTP_X_FORWARDED_FOR")
+        if ip:
+            ip = ip.split(",")[0].strip()
+        else:
+            ip = request.META.get("REMOTE_ADDR", None)
+
+        extra = {
+            "user_pk": getattr(request.user, "pk", None),
+            "username": getattr(request.user, "username", str(request.user)),
+            "ip": ip,
+            "query_params": dict(request.query_params),
+            "body": request.data if hasattr(request, "data") else None
+        }
         log_event(
             user=request.user,
             endpoint=request.path,
             method=request.method,
-            extra={"query_params": dict(request.query_params)}
+            extra=extra
         )
         repo = ProyectoRepositoryImpl()
         servicio = ProyectoService(repo)
@@ -53,6 +65,39 @@ class ProyectoViewSet(viewsets.ViewSet):
         return Response(serializer.data)
     
     
+    #Recibir, validar y guardar datos enviados por POST
+    def create(self, request):
+        #return Response({"mensaje": "POST recibido", "data": request.data}, status=201)
+        proyectos = request.data  #Recibir base de proyectos JSON
+
+        #Validar integridad de base JSON
+        if not isinstance(proyectos, list):
+            return Response({"error": "Se esperaba una lista de proyectos"}, status=400)
+
+        resultados = []
+        for proyecto in proyectos:  #Recorrer base de proyectos
+            pro_id = proyecto.get('pro_id')
+            pro_nombre = proyecto.get('pro_nombre')
+            if not pro_id or not pro_nombre:
+                resultados.append({"pro_id": pro_id, "status": "error", "detalle": "Faltan campos obligatorios"})
+                continue
+
+            #¿Proyecto existe en BD?
+            obj, creado = ProyectoORM.objects.update_or_create(
+                pro_id=pro_id,
+                defaults={"pro_nombre": pro_nombre}
+            )
+            if creado:
+                resultados.append({"pro_id": pro_id, "status": "creado"})
+            else:
+                resultados.append({"pro_id": pro_id, "status": "actualizado"})
+
+        return Response({"resultado": resultados}, status=201)
+    
+
+
+    
+    
     # @action(detail=True, methods=['get'], url_path='estado')
     # def estado(self, request, pk=None):
     #     try:
@@ -67,7 +112,7 @@ class ProyectoViewSet(viewsets.ViewSet):
     @action(detail=False, methods=['get'], url_path='sector-economico/(?P<parametro>[^/.]+)')
     def listar_por_sector_economico(self, request, parametro=None):
         
-    # Registrar el evento en CosmosDB
+    # Registrar el Log en CosmosDB
         ip = request.META.get("HTTP_X_FORWARDED_FOR")
         if ip:
             ip = ip.split(",")[0].strip()

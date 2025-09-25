@@ -9,6 +9,7 @@ from project.infrastructure.django_models.empresa import EmpresaORM
 from project.api.serializers.proyectoserializer import ProyectoSerializer
 
 class EmpresaViewSet(viewsets.ViewSet):
+
     # sólo endpoints de lectura
     def list(self, request):
         repo = EmpresaRepositoryImpl()
@@ -36,6 +37,42 @@ class EmpresaViewSet(viewsets.ViewSet):
         if action == 'empresas_con_proyectos':
             return "Empresas con proyecto"
         return "Lista de Empresas"
+    
+       
+    #Recibir, validar y guardar datos enviados por POST
+    def create(self, request):
+        empresas = request.data
+        if not isinstance(empresas, list):
+            return Response({"error": "Se esperaba una lista de empresas"}, status=400)
+
+        resultados = []
+        for empresa in empresas:
+            empr_id = empresa.get('empr_id')
+            empr_nombre = empresa.get('empr_nombre')
+            empr_rut = empresa.get('empr_rut')
+            if not (empr_id and empr_nombre and empr_rut):
+                empresa_resultado = empresa.copy()
+                empresa_resultado["status"] = "error"
+                empresa_resultado["detalle"] = "Faltan campos obligatorios"
+                resultados.append(empresa_resultado)
+                continue
+            # Aquí puedes crear o actualizar la empresa en la BD
+                # obj, creado = EmpresaORM.objects.update_or_create(
+                #     empr_id=empr_id,
+                #     defaults={"empr_nombre": empr_nombre, "empr_rut": empr_rut}
+                # )
+                # if creado
+                #     resultados.append({"empr_id": empr_id, "status": "creado"})
+                # else:
+                #     resultados.append({"empr_id": empr_id, "status": "actualizado"})
+
+                # Por ahora, solo simula el resultado:
+
+            empresa_resultado = empresa.copy()
+            empresa_resultado["status"] = "procesado"
+            resultados.append(empresa_resultado)
+
+        return Response({"resultado": resultados}, status=201)
     
         #Lista todos los proyectos asociados a una empresa específica.
     # URL CON PARAMETRO: http://127.0.0.1:8000/api/proyectos/por-empresa/?empresa_id=44765
