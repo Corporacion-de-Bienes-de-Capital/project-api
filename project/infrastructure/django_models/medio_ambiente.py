@@ -24,14 +24,15 @@ class MedioAmbienteORM(models.Model):
         ProyectoORM,
         on_delete=models.DO_NOTHING,
         db_column='pro_id',
-        related_name='medioambiente' # <-- así defines el nombre
+        related_name='medioambiente'    
     )
 
     # Relación con EstadoSeaORM
     esea = models.ForeignKey(
         EstadoSeaORM,
         on_delete=models.DO_NOTHING,
-        db_column='esea_id'
+        db_column='esea_id',
+        related_name='medioambiente'    
     )
 
     class Meta:
