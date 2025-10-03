@@ -123,8 +123,7 @@ class ProyectoORMSerializer(serializers.ModelSerializer):
             'esea_id',
             'esea_nombre',
 
-        ]  # Personalizar la lista, solo algunos campos o todos
-            #fields = '__all__'  # Todos los campos del modelo
+        ] 
 
     
 class ProyectoListaSerializer(serializers.ModelSerializer):

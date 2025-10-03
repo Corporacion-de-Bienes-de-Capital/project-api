@@ -14,3 +14,4 @@ class EtapasProyectoORM(models.Model):
 
     class Meta:
         db_table = 'tbl_etapas_proyecto'
+        managed = False 

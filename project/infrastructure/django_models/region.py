@@ -1,6 +1,5 @@
 from django.db import models
 from project.infrastructure.django_models.pais import PaisORM
-#from project.infrastructure.django_models.pais import PaisORM
 
 class RegionORM(models.Model):
 	reg_id = models.AutoField(primary_key=True)

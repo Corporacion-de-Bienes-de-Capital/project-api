@@ -200,7 +200,7 @@ class ProyectoViewSet(viewsets.ViewSet):
         except Exception as e:
             return Response({"error": str(e)}, status=500)
         
-    # Recibir, validar y guardar datos de RelListadoEquiposDescripcion enviados por POST
+    # Recibir, validar y guardar datos de proyecto enviados por POST
 
     def create(self, request):
      try:
@@ -276,7 +276,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                     defaults=defaults_proyecto
                 )
 
-                # --- Guardar/actualizar equipos relacionados ---
+                # --- Guardar/actualizar   rel_listado_equipos_descripcion ---
                 equipos_resultados = []
                 for equipo in equipos_data:
                     lieq_id = equipo.get("lieq_id")

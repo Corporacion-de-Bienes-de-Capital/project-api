@@ -55,7 +55,6 @@ class ProyectoORM(models.Model):
         on_delete=models.DO_NOTHING, 
         related_name='proyectos',
         db_column='empr_id',
-        #to_field='empr_id',
         null=True,
         blank=True
     )
