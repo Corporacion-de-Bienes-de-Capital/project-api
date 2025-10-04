@@ -94,113 +94,8 @@ class ProyectoViewSet(viewsets.ViewSet):
             return Response({'error': 'Proyecto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         serializer = ProyectoORMSerializer(proyecto)
         return Response(serializer.data)
-    
-    
-    # Recibir, validar y guardar datos de Proyectos enviados por POST
-
-    def create(self, request):
-        # Mapeo de campos ForeignKey a sus modelos
-        FK_MODEL_MAP = {
-            'pro_estado': EstadoProyectoORM,
-            'empresa': EmpresaORM,
-            'tinv_id': TipoInversionORM,
-            'seco_id': SectorEconomicoORM,
-            'tplo_id': TipologiasORM,
-            'tpro_id': TipoProyectoORM,
-            'dist_id': GeneracionDistribuidaORM,
-            'relacion_hidrogeno_id': RelacionHidrogenoORM,
-            'estatus_cont_id': EstatusContingenciaORM,
-            'pais_id': PaisORM,
-            'reg_id': RegionORM,
-            'prov_id': ProvinciasORM,
-            'comu_id': ComunasORM,
-        }
-
-        def obtener_instancia_fk(campo, valor):
-            modelo = FK_MODEL_MAP.get(campo)
-            if modelo and valor not in [None, '', 0]:
-                try:
-                    return modelo.objects.get(pk=valor)
-                except modelo.DoesNotExist:
-                    return None
-            return None
-
-        try:
-            proyectos = request.data  #Recibir base de proyectos JSON
-            if not isinstance(proyectos, list):
-                proyectos = [proyectos]
-
-            resultados = []
-            campos_requeridos = [
-                "pro_id", "pro_nombre", "pro_producto", "pro_capacidad_produccion", "pro_ubicacion",
-                "region_incidencia_proyecto", "pro_monto_inversion", "pro_descripcion", "is_covid_affected",
-                "is_green_hydrogen", "relacion_hidrogeno_id", "is_deleted", "created_at", "edited_at",
-                "user_created_at", "user_edited_at", "comu_id", "pro_cron_fecha", "pro_diferido",
-                "confidencial", "mindha", "sea_afectado", "desaladora", "codigo_bip", "codigo_sea",
-                "pro_estado", "empr_id", "tinv_id", "seco_id", "tplo_id", "tpro_id", "dist_id",
-                "estatus_cont_id", "pais_id", "reg_id", "prov_id"
-            ]
-            for proyecto in proyectos:
-                # Validar que todos los campos estén presentes
-                if not all(campo in proyecto for campo in campos_requeridos):
-                    proyecto_resultado = proyecto.copy()
-                    proyecto_resultado["status"] = "error"
-                    proyecto_resultado["detalle"] = "Faltan campos obligatorios"
-                    resultados.append(proyecto_resultado)
-                    continue
-
-                pro_id = proyecto.get('pro_id')
-                defaults = {
-                    "pro_nombre": proyecto.get('pro_nombre'),
-                    "pro_producto": proyecto.get('pro_producto'),
-                    "pro_capacidad_produccion": proyecto.get('pro_capacidad_produccion'),
-                    "pro_ubicacion": proyecto.get('pro_ubicacion'),
-                    "region_incidencia_proyecto": proyecto.get('region_incidencia_proyecto'),
-                    "pro_monto_inversion": proyecto.get('pro_monto_inversion'),
-                    "pro_descripcion": proyecto.get('pro_descripcion'),
-                    "is_covid_affected": proyecto.get('is_covid_affected'),
-                    "is_green_hydrogen": proyecto.get('is_green_hydrogen'),
-                    "relacion_hidrogeno_id": obtener_instancia_fk('relacion_hidrogeno_id', proyecto.get('relacion_hidrogeno_id')),
-                    "is_deleted": proyecto.get('is_deleted'),
-                    "created_at": proyecto.get('created_at'),
-                    "edited_at": proyecto.get('edited_at'),
-                    "user_created_at": proyecto.get('user_created_at'),
-                    "user_edited_at": proyecto.get('user_edited_at'),
-                    "comu_id": obtener_instancia_fk('comu_id', proyecto.get('comu_id')),
-                    "pro_cron_fecha": proyecto.get('pro_cron_fecha'),
-                    "pro_diferido": proyecto.get('pro_diferido'),
-                    "confidencial": proyecto.get('confidencial'),
-                    "mindha": proyecto.get('mindha'),
-                    "sea_afectado": proyecto.get('sea_afectado'),
-                    "desaladora": proyecto.get('desaladora'),
-                    "codigo_bip": proyecto.get('codigo_bip'),
-                    "codigo_sea": proyecto.get('codigo_sea'),
-                    "pro_estado": obtener_instancia_fk('pro_estado', proyecto.get('pro_estado')),
-                    "empresa": obtener_instancia_fk('empresa', proyecto.get('empr_id')),
-                    "tinv_id": obtener_instancia_fk('tinv_id', proyecto.get('tinv_id')),
-                    "seco_id": obtener_instancia_fk('seco_id', proyecto.get('seco_id')),
-                    "tplo_id": obtener_instancia_fk('tplo_id', proyecto.get('tplo_id')),
-                    "tpro_id": obtener_instancia_fk('tpro_id', proyecto.get('tpro_id')),
-                    "dist_id": obtener_instancia_fk('dist_id', proyecto.get('dist_id')),
-                    "estatus_cont_id": obtener_instancia_fk('estatus_cont_id', proyecto.get('estatus_cont_id')),
-                    "pais_id": obtener_instancia_fk('pais_id', proyecto.get('pais_id')),
-                    "reg_id": obtener_instancia_fk('reg_id', proyecto.get('reg_id')),
-                    "prov_id": obtener_instancia_fk('prov_id', proyecto.get('prov_id')),
-                }
-
-                obj, creado = ProyectoORM.objects.update_or_create(
-                    pro_id=pro_id,
-                    defaults=defaults
-                )
-                proyecto_resultado = proyecto.copy()
-                proyecto_resultado["status"] = "creado" if creado else "actualizado"
-                resultados.append(proyecto_resultado)
-
-            return Response({"resultado": resultados}, status=201)
-        except Exception as e:
-            return Response({"error": str(e)}, status=500)
-        
-    # Recibir, validar y guardar datos de proyecto enviados por POST
+     
+    # Recibir, validar y guardar datos de  enviados por POST
 
     def create(self, request):
      try:
@@ -276,7 +171,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                     defaults=defaults_proyecto
                 )
 
-                # --- Guardar/actualizar   rel_listado_equipos_descripcion ---
+                # --- Guardar/actualizar  rel_listado_equipos_descripcion---
                 equipos_resultados = []
                 for equipo in equipos_data:
                     lieq_id = equipo.get("lieq_id")
@@ -286,7 +181,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                         "edited_at": equipo.get("edited_at"),
                     }
 
-                    equipo_obj, eq_creado = RelListadoEquiposDescripcionORM.objects.update_or_create(
+                    equipo_obj,_ = RelListadoEquiposDescripcionORM.objects.update_or_create(
                         lieq_id=lieq_id,
                         pro=proyecto_obj,
                         defaults=defaults_equipo
@@ -309,7 +204,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                         "edited_at": obra.get("edited_at"),
                     }
 
-                    obra_obj, obra_creada = RelListadoObrasDescripcionORM.objects.update_or_create(
+                    obra_obj, _ = RelListadoObrasDescripcionORM.objects.update_or_create(
                         liob_id=liob_id,
                         pro=proyecto_obj,
                         defaults=defaults_obra
@@ -336,7 +231,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                         "edited_at": obra.get("edited_at"),
                     }
 
-                    producto_obj, obra_creada = RelProductoProyectoORM.objects.update_or_create(
+                    producto_obj, _ = RelProductoProyectoORM.objects.update_or_create(
                         prop_id=prop_id,
                         defaults=defaults_producto
                     )
@@ -369,7 +264,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                         "user_edited_at": bitacora.get("user_edited_at"),
                     }
 
-                    bitacora_obj, bita_creada = BitacorasORM.objects.update_or_create(
+                    bitacora_obj,_ = BitacorasORM.objects.update_or_create(
                         bita_id=bita_id,
                         defaults=defaults_bitacora
                     )
@@ -589,7 +484,7 @@ class ProyectoViewSet(viewsets.ViewSet):
                         "desc_obras": descripcion.get("desc_obras"),
                     }
 
-                    descripcion_obj, creada = DescripcionORM.objects.update_or_create(
+                    descripcion_obj,_ = DescripcionORM.objects.update_or_create(
                         desc_id=desc_id,
                         defaults=defaults_descripcion
                     )
@@ -847,16 +742,6 @@ class ProyectoViewSet(viewsets.ViewSet):
      except Exception as e:
         return Response({"error": str(e)}, status=500)
 
-    
-    # @action(detail=True, methods=['get'], url_path='estado')
-    # def estado(self, request, pk=None):
-    #     try:
-    #         proyecto = ProyectoORM.objects.get(pk=pk)
-    #     except ProyectoORM.DoesNotExist:
-    #         return Response({'error': 'Proyecto no encontrado'}, status=status.HTTP_404_NOT_FOUND)
-    #     serializer = ProyectoSerializer(proyecto)
-    #     return Response(serializer.data)
-    
 
     #Listar proyectos por sector económico usando slug
     @action(detail=False, methods=['get'], url_path='sector-economico/(?P<parametro>[^/.]+)')
@@ -907,7 +792,7 @@ class ProyectoViewSet(viewsets.ViewSet):
         except SectorEconomicoORM.DoesNotExist:
             return Response({'error': 'Sector económico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
         
-        except Exception as e:
+        except Exception:
             # Manejo de errores generales
             #return Response({'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR) para depurar
             return Response({'error': 'Sector económico no encontrado'}, status=status.HTTP_404_NOT_FOUND)
