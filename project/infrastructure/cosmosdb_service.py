@@ -1,4 +1,5 @@
-from project.infrastructure.cosmosdb import container 
+from project.infrastructure.cosmosdb import container
+from datetime import datetime, timezone 
 from datetime import datetime
 import pytz
 
@@ -23,7 +24,7 @@ def log_event(user, endpoint, method, extra=None):
     chile_tz = pytz.timezone('America/Santiago')
     timestamp = datetime.now(chile_tz).isoformat()
     log_item = {
-        "id": str(datetime.utcnow().timestamp()).replace('.', ''),
+        "id": str(datetime.now(timezone.utc).timestamp()).replace('.', ''),
         "timestamp": timestamp,
         "user": str(user) if user else "Huguito",
         "endpoint": endpoint,
@@ -37,25 +38,3 @@ def log_event(user, endpoint, method, extra=None):
     container.create_item(body=log_item)
 
 
-
-# def log_api_access(request):
-#     ip = request.META.get("HTTP_X_FORWARDED_FOR")
-#     if ip:
-#         ip = ip.split(",")[0].strip()
-#     else:
-#         ip = request.META.get("REMOTE_ADDR", None)
-
-#     extra = {
-#         "user_pk": getattr(request.user, "pk", None),
-#         "username": getattr(request.user, "username", str(request.user)),
-#         "ip": ip,
-#         "query_params": dict(request.query_params),
-#         "body": request.data if hasattr(request, "data") else None
-#     }
-#     log_event(
-#         user=request.user,
-#         endpoint=request.path,
-#         method=request.method,
-#         extra=extra
-#     )
-    
