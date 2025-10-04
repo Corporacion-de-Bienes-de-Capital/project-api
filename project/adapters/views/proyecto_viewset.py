@@ -96,7 +96,6 @@ class ProyectoViewSet(viewsets.ViewSet):
         return Response(serializer.data)
      
     # Recibir, validar y guardar datos de  enviados por POST
-
     def create(self, request):
      try:
         data = request.data
@@ -138,8 +137,7 @@ class ProyectoViewSet(viewsets.ViewSet):
             obras_data = item.get("rel_listado_obras_descripcion", [])
             obras_productos = item.get("rel_producto_proyecto", [])
             bitacoras_data = item.get("tbl_bitacoras", [])
-            contacto_proyecto_data = item.get("tbl_contacto_proyecto", [])
-            contactos_data = item.get("tbl_contactos", [])
+            contacto_proyecto_data = item.get("tbl_contacto_proyecto", [])         
             cronogramas_data = item.get("tbl_cronograma", [])
             descripcion_data = item.get("tbl_descripcion", [])
             empleos_data = item.get("tbl_empleo", [])
@@ -172,550 +170,38 @@ class ProyectoViewSet(viewsets.ViewSet):
                 )
 
                 # --- Guardar/actualizar  rel_listado_equipos_descripcion---
-                equipos_resultados = []
-                for equipo in equipos_data:
-                    lieq_id = equipo.get("lieq_id")
-                    defaults_equipo = {
-                        "quantity": equipo.get("quantity"),
-                        "created_at": equipo.get("created_at"),
-                        "edited_at": equipo.get("edited_at"),
-                    }
-
-                    equipo_obj,_ = RelListadoEquiposDescripcionORM.objects.update_or_create(
-                        lieq_id=lieq_id,
-                        pro=proyecto_obj,
-                        defaults=defaults_equipo
-                    )
-
-                    equipos_resultados.append({
-                        "lieq_id": equipo_obj.lieq_id,
-                        "pro_id": proyecto_obj.pro_id,
-                        "quantity": equipo_obj.quantity,
-                        "created_at": equipo_obj.created_at,
-                        "edited_at": equipo_obj.edited_at,
-                    })
+                equipos_resultados = self._guardar_equipos(equipos_data, proyecto_obj)
 
                 # --- Guardar/actualizar obras relacionadas ---
-                obras_resultados = []
-                for obra in obras_data:
-                    liob_id = obra.get("liob_id")
-                    defaults_obra = {
-                        "created_at": obra.get("created_at"),
-                        "edited_at": obra.get("edited_at"),
-                    }
-
-                    obra_obj, _ = RelListadoObrasDescripcionORM.objects.update_or_create(
-                        liob_id=liob_id,
-                        pro=proyecto_obj,
-                        defaults=defaults_obra
-                    )
-
-                    obras_resultados.append({
-                        "liob_id": obra_obj.liob_id,
-                        "pro_id": proyecto_obj.pro_id,
-                        "created_at": obra_obj.created_at,
-                        "edited_at": obra_obj.edited_at,
-                    })
+                obras_resultados = self._guardar_obras(obras_data, proyecto_obj)
 
                 # --- Guardar/actualizar productos proyecto relacionados ---
-                producto_resultado = []
-
-                for obra in obras_productos:
-                    prop_id = obra.get("prop_id")
-                    defaults_producto = {
-                        "prop_descripcion": obra.get("prop_descripcion"),
-                        "prop_cantidad": obra.get("prop_cantidad"),
-                        "pro": proyecto_obj,
-                        "prod_id": obra.get("prod_id"),
-                        "created_at": obra.get("created_at"),
-                        "edited_at": obra.get("edited_at"),
-                    }
-
-                    producto_obj, _ = RelProductoProyectoORM.objects.update_or_create(
-                        prop_id=prop_id,
-                        defaults=defaults_producto
-                    )
-
-                    producto_resultado.append({
-                        "prop_id": producto_obj.prop_id,
-                        "pro_id": proyecto_obj.pro_id,
-                        "prod_id": producto_obj.prod.prod_id,
-                        "prop_descripcion": producto_obj.prop_descripcion,
-                        "prop_cantidad": producto_obj.prop_cantidad,
-                        "created_at": producto_obj.created_at,
-                        "edited_at": producto_obj.edited_at,
-                    })
-
+                producto_resultado = self._guardar_productos(obras_productos, proyecto_obj)
+                
                 # --- Guardar/actualizar bitacoras relacionadas ---
-                bitacoras_resultado = []
-
-                for bitacora in bitacoras_data:  
-                    bita_id = bitacora.get("bita_id")
-                    defaults_bitacora = {
-                        "bita_inversion": bitacora.get("bita_inversion"),
-                        "bita_cronograma": bitacora.get("bita_cronograma"),
-                        "bita_estado_sea": bitacora.get("bita_estado_sea"),
-                        "bita_otros": bitacora.get("bita_otros"),
-                        "pro": proyecto_obj,
-                        "is_deleted": bitacora.get("is_deleted"),
-                        "created_at": bitacora.get("created_at"),
-                        "edited_at": bitacora.get("edited_at"),
-                        "user_created_at": bitacora.get("user_created_at"),
-                        "user_edited_at": bitacora.get("user_edited_at"),
-                    }
-
-                    bitacora_obj,_ = BitacorasORM.objects.update_or_create(
-                        bita_id=bita_id,
-                        defaults=defaults_bitacora
-                    )
-
-                    bitacoras_resultado.append({
-                        "bita_id": bitacora_obj.bita_id,
-                        "pro_id": proyecto_obj.pro_id,
-                        "bita_inversion": bitacora_obj.bita_inversion,
-                        "bita_cronograma": bitacora_obj.bita_cronograma,
-                        "bita_estado_sea": bitacora_obj.bita_estado_sea,
-                        "bita_otros": bitacora_obj.bita_otros,
-                        "is_deleted": bitacora_obj.is_deleted,
-                        "created_at": bitacora_obj.created_at,
-                        "edited_at": bitacora_obj.edited_at,
-                        "user_created_at": bitacora_obj.user_created_at,
-                        "user_edited_at": bitacora_obj.user_edited_at,
-                    })
+                bitacoras_resultado = self._guardar_bitacoras(bitacoras_data, proyecto_obj)
 
                 # --- Guardar/actualizar contactos_proyecto relacionados ---
-                contactos_proyecto_resultado = []
-
-                for contacto in contacto_proyecto_data:  # contactos_data debe ser una lista bajo la clave "rel_contacto_proyecto"
-                    copr_id = contacto.get("copr_id")
-                    empr_id = contacto.get("empr_id")
-                    cont_id = contacto.get("cont_id")
-                    pro_id = contacto.get("pro_id")
-
-                    # Instanciar ForeignKeys
-                    empresa_obj = obtener_instancia_fk('empresa', empr_id)
-                    proyecto_obj = obtener_instancia_fk('proyecto', pro_id)
-                    contacto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-                    if cont_id is not None:
-                        try:
-                            contacto_obj = ContactosORM.objects.get(pk=cont_id)
-                        except ContactosORM.DoesNotExist:
-                            contacto_obj = None
-
-                    # Validar que proyecto_obj no sea None antes de crear el objeto
-                    if proyecto_obj is None:
-                        contacto_resultado = contacto.copy()
-                        contacto_resultado["status"] = "error"
-                        contacto_resultado["detalle"] = f"No existe ProyectoORM con pro_id={pro_id}"
-                        contactos_resultado.append(contacto_resultado)
-                        continue
-
-                    defaults_contacto = {
-                        "empr": empresa_obj,
-                        "cont": contacto_obj,  # ForeignKey a ContactosORM,
-                        "copr_tipo": contacto.get("copr_tipo"),
-                        "copr_desc": contacto.get("copr_desc"),
-                        "pro": proyecto_obj,
-                        "created_at": contacto.get("created_at"),
-                        "edited_at": contacto.get("edited_at"),
-                    }
-
-                    contacto_obj, creado = ContactoProyectoORM.objects.update_or_create(
-                        copr_id=copr_id,
-                        defaults=defaults_contacto
-                    )
-
-                    contactos_proyecto_resultado.append({
-                        "copr_id": contacto_obj.copr_id,
-                        "empr_id": contacto_obj.empr.empr_id if contacto_obj.empr else None,
-                        "cont_id": contacto_obj.cont.cont_id if contacto_obj.cont else None,
-                        "copr_tipo": contacto_obj.copr_tipo,
-                        "copr_desc": contacto_obj.copr_desc,
-                        "pro_id": contacto_obj.pro.pro_id if contacto_obj.pro else None,
-                        "created_at": contacto_obj.created_at,
-                        "edited_at": contacto_obj.edited_at,
-                    })
-
-                
-                # Guardar/actualizar contactos relacionados ---
-                contactos_resultado = []
-
-                for contacto in contactos_data:  # contactos_data debe ser una lista bajo la clave "rel_contactos"
-                    empr_id = contacto.get("empr_id")
-                    cont_id = contacto.get("cont_id")
-                    contacto_instancia = None
-                    if cont_id is not None:
-                        try:
-                            contacto_instancia = ContactosORM.objects.get(pk=cont_id)
-                        except ContactosORM.DoesNotExist:
-                            contacto_instancia = None
-
-                    # Instanciar ForeignKey de empresa
-                    empresa_obj = None
-                    if empr_id is not None:
-                        try:
-                            empresa_obj = EmpresaORM.objects.get(pk=empr_id)
-                        except EmpresaORM.DoesNotExist:
-                            empresa_obj = None
-
-                    defaults_contacto = {
-                        "cont": contacto_instancia,
-                        "cont_nombre": contacto.get("cont_nombre"),
-                        "cont_telefono": contacto.get("cont_telefono"),
-                        "cont_correo": contacto.get("cont_correo"),
-                        "area_id": contacto.get("area_id"),
-                        "carc_id": contacto.get("carc_id"),
-                        "empr": empresa_obj,
-                        "cont_es_interno": contacto.get("cont_es_interno"),
-                        "carc_descripcion": contacto.get("carc_descripcion"),
-                        "cont_observacion": contacto.get("cont_observacion"),
-                        "is_deleted": contacto.get("is_deleted"),
-                        "created_at": contacto.get("created_at"),
-                        "edited_at": contacto.get("edited_at"),
-                        "deleted_at": contacto.get("deleted_at"),
-                    }
-
-                    contacto_obj, creado = ContactosORM.objects.update_or_create(
-                        copr_id=contacto.get("copr_id"),
-                        defaults=defaults_contacto
-                    )
-
-                    contactos_resultado.append({
-                        "cont_id": contacto_obj.cont_id,
-                        "empr_id": contacto_obj.empr.empr_id if contacto_obj.empr else None,
-                        "cont_nombre": contacto_obj.cont_nombre,
-                        "cont_telefono": contacto_obj.cont_telefono,
-                        "cont_correo": contacto_obj.cont_correo,
-                        "area_id": contacto_obj.area_id,
-                        "carc_id": contacto_obj.carc_id,
-                        "cont_es_interno": contacto_obj.cont_es_interno,
-                        "carc_descripcion": contacto_obj.carc_descripcion,
-                        "cont_observacion": contacto_obj.cont_observacion,
-                        "is_deleted": contacto_obj.is_deleted,
-                        "created_at": contacto_obj.created_at,
-                        "edited_at": contacto_obj.edited_at,
-                        "deleted_at": contacto_obj.deleted_at,
-                    })
-
+                contactos_proyecto_resultado = self._guardar_contactos_proyecto(
+                contacto_proyecto_data, obtener_instancia_fk)
+              
                 # Guardar/actualizar cronogramas relacionados
-                cronogramas_resultado = []
-
-                for cronograma in cronogramas_data:  # cronogramas_data debe ser una lista bajo la clave "tbl_cronograma"
-                    cron_id = cronograma.get("cron_id")
-                    cont_id = cronograma.get("cont_id")
-                    pro_id = cronograma.get("pro_id")
-
-                    # Instanciar ForeignKeys
-                    contacto_obj = None
-                    if cont_id is not None:
-                        try:
-                            contacto_obj = ContactosORM.objects.get(pk=cont_id)
-                        except ContactosORM.DoesNotExist:
-                            contacto_obj = None
-
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_cronograma = {
-                        "cont": contacto_obj,
-                        "tiob_id": cronograma.get("tiob_id"),
-                        "cron_obs": cronograma.get("cron_obs"),
-                        "cron_etapa": cronograma.get("cron_etapa"),
-                        "pro": proyecto_obj,
-                        "created_at": cronograma.get("created_at"),
-                        "edited_at": cronograma.get("edited_at"),
-                    }
-
-                    cronograma_obj, creado = CronogramaORM.objects.update_or_create(
-                        cron_id=cron_id,
-                        defaults=defaults_cronograma
-                    )
-
-                    cronogramas_resultado.append({
-                        "cron_id": cronograma_obj.cron_id,
-                        "cont_id": cronograma_obj.cont.cont_id if cronograma_obj.cont else None,
-                        "tiob_id": cronograma_obj.tiob_id,
-                        "cron_obs": cronograma_obj.cron_obs,
-                        "cron_etapa": cronograma_obj.cron_etapa,
-                        "pro_id": cronograma_obj.pro.pro_id if cronograma_obj.pro else None,
-                        "created_at": cronograma_obj.created_at,
-                        "edited_at": cronograma_obj.edited_at,
-                    })
+                cronogramas_resultado = self._guardar_cronogramas(cronogramas_data)
 
                 # Guardar/actualizar descripciones relacionadas
-                descripciones_resultado = []
-                if isinstance(descripcion_data, dict):
-                    descripcion_data = [descripcion_data] # Asegura que descripcion_data sea una lista de diccionarios
-                elif not isinstance(descripcion_data, list):
-                    descripcion_data = []
-
-                for descripcion in descripcion_data:
-                    
-                    
-                    desc_id = descripcion.get("desc_id")
-                    pro_id = descripcion.get("pro_id")
-
-                    # Instanciar ForeignKey de proyecto
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_descripcion = {
-                        "desc_objetivo": descripcion.get("desc_objetivo"),
-                        "desc_resumen": descripcion.get("desc_resumen"),
-                        "pro": proyecto_obj,
-                        "is_deleted": descripcion.get("is_deleted"),
-                        "created_at": descripcion.get("created_at"),
-                        "edited_at": descripcion.get("edited_at"),
-                        "desc_ubicacion": descripcion.get("desc_ubicacion"),
-                        "desc_vidautil": descripcion.get("desc_vidautil"),
-                        "desc_obras": descripcion.get("desc_obras"),
-                    }
-
-                    descripcion_obj,_ = DescripcionORM.objects.update_or_create(
-                        desc_id=desc_id,
-                        defaults=defaults_descripcion
-                    )
-
-                    descripciones_resultado.append({
-                        "desc_id": descripcion_obj.desc_id,
-                        "desc_objetivo": descripcion_obj.desc_objetivo,
-                        "desc_resumen": descripcion_obj.desc_resumen,
-                        "pro_id": descripcion_obj.pro.pro_id if descripcion_obj.pro else None,
-                        "is_deleted": descripcion_obj.is_deleted,
-                        "created_at": descripcion_obj.created_at,
-                        "edited_at": descripcion_obj.edited_at,
-                        "desc_ubicacion": descripcion_obj.desc_ubicacion,
-                        "desc_vidautil": descripcion_obj.desc_vidautil,
-                        "desc_obras": descripcion_obj.desc_obras,
-                    })
-                
+                descripciones_resultado = self._guardar_descripciones(descripcion_data)
 
                 # Guardar/actualizar empleos relacionados
-                empleos_resultado = []             
-                if isinstance(empleos_data, dict): # Asegura que empleos_data sea una lista de diccionarios
-                    empleos_data = [empleos_data]
-                elif not isinstance(empleos_data, list):
-                    empleos_data = []
+                empleos_resultado = self._guardar_empleos(empleos_data)
 
-                for empleo in empleos_data:
-                    if not isinstance(empleo, dict):
-                        continue  # Salta elementos que no sean dict
-                    pro_id = empleo.get("pro_id")
-
-                    # Instanciar ForeignKey de proyecto
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_empleo = {
-                        "emp_con_nocal": empleo.get("emp_con_nocal"),
-                        "emp_con_profe": empleo.get("emp_con_profe"),
-                        "emp_con_tec": empleo.get("emp_con_tec"),
-                        "emp_con_total": empleo.get("emp_con_total"),
-                        "emp_con_nocal_peak": empleo.get("emp_con_nocal_peak"),
-                        "emp_con_profe_peak": empleo.get("emp_con_profe_peak"),
-                        "emp_con_tec_peak": empleo.get("emp_con_tec_peak"),
-                        "emp_con_total_peak": empleo.get("emp_con_total_peak"),
-                        "emp_ope_nocal": empleo.get("emp_ope_nocal"),
-                        "emp_ope_profe": empleo.get("emp_ope_profe"),
-                        "emp_ope_tec": empleo.get("emp_ope_tec"),
-                        "emp_ope_total": empleo.get("emp_ope_total"),
-                        "emp_ope_nocal_peak": empleo.get("emp_ope_nocal_peak"),
-                        "emp_ope_profe_peak": empleo.get("emp_ope_profe_peak"),
-                        "emp_ope_tec_peak": empleo.get("emp_ope_tec_peak"),
-                        "emp_ope_total_peak": empleo.get("emp_ope_total_peak"),
-                    }
-
-                    empleo_obj, creado = EmpleoORM.objects.update_or_create(
-                        pro=proyecto_obj,
-                        defaults=defaults_empleo
-                    )
-
-                    empleos_resultado.append({
-                        "pro_id": empleo_obj.pro.pro_id if empleo_obj.pro else None,
-                        "emp_con_nocal": empleo_obj.emp_con_nocal,
-                        "emp_con_profe": empleo_obj.emp_con_profe,
-                        "emp_con_tec": empleo_obj.emp_con_tec,
-                        "emp_con_total": empleo_obj.emp_con_total,
-                        "emp_con_nocal_peak": empleo_obj.emp_con_nocal_peak,
-                        "emp_con_profe_peak": empleo_obj.emp_con_profe_peak,
-                        "emp_con_tec_peak": empleo_obj.emp_con_tec_peak,
-                        "emp_con_total_peak": empleo_obj.emp_con_total_peak,
-                        "emp_ope_nocal": empleo_obj.emp_ope_nocal,
-                        "emp_ope_profe": empleo_obj.emp_ope_profe,
-                        "emp_ope_tec": empleo_obj.emp_ope_tec,
-                        "emp_ope_total": empleo_obj.emp_ope_total,
-                        "emp_ope_nocal_peak": empleo_obj.emp_ope_nocal_peak,
-                        "emp_ope_profe_peak": empleo_obj.emp_ope_profe_peak,
-                        "emp_ope_tec_peak": empleo_obj.emp_ope_tec_peak,
-                        "emp_ope_total_peak": empleo_obj.emp_ope_total_peak,
-                    })
-
-
-                # Guardar/actualizar etapas_proyecto relacionadas               
-                etapas_resultado = []
-
-                # Normalización robusta
-                if isinstance(etapas_data, dict):
-                    etapas_data = [etapas_data]
-                elif not isinstance(etapas_data, list):
-                    etapas_data = []
-
-                for etapa in etapas_data:
-                    if not isinstance(etapa, dict):
-                        continue
-                    pro_id = etapa.get("pro_id")
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_etapa = {
-                        "ing_conc_inicio": etapa.get("ing_conc_inicio"),
-                        "ing_conc_fin": etapa.get("ing_conc_fin"),
-                        "ing_basica_inicio": etapa.get("ing_basica_inicio"),
-                        "ing_basica_fin": etapa.get("ing_basica_fin"),
-                        "ing_detalle_inicio": etapa.get("ing_detalle_inicio"),
-                        "ing_detalle_fin": etapa.get("ing_detalle_fin"),
-                        "cons_inicio": etapa.get("cons_inicio"),
-                        "cons_fin": etapa.get("cons_fin"),
-                    }
-
-                    etapa_obj, creado = EtapasProyectoORM.objects.update_or_create(
-                        pro=proyecto_obj,
-                        defaults=defaults_etapa
-                    )
-
-                    etapas_resultado.append({
-                        "pro_id": etapa_obj.pro.pro_id if etapa_obj.pro else None,
-                        "ing_conc_inicio": etapa_obj.ing_conc_inicio,
-                        "ing_conc_fin": etapa_obj.ing_conc_fin,
-                        "ing_basica_inicio": etapa_obj.ing_basica_inicio,
-                        "ing_basica_fin": etapa_obj.ing_basica_fin,
-                        "ing_detalle_inicio": etapa_obj.ing_detalle_inicio,
-                        "ing_detalle_fin": etapa_obj.ing_detalle_fin,
-                        "cons_inicio": etapa_obj.cons_inicio,
-                        "cons_fin": etapa_obj.cons_fin,
-                    })
+               # Guardar/actualizar etapas_proyecto relacionadas                
+                etapas_resultado = self._guardar_etapas(etapas_data)
 
                 # --- Guardar/actualizar geo relacionados ---
-                geo_resultado = []
-                # Normalización robusta
-                if isinstance(geo_data, dict):
-                    geo_data = [geo_data] # Asegura que geo_data sea una lista de diccionarios
-                elif not isinstance(geo_data, list):
-                    geo_data = []
-
-                for geo in geo_data:
-                    if not isinstance(geo, dict):
-                        continue
-                    pro_id = geo.get("pro_id")
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_geo = {
-                        "latitud": geo.get("latitud"),
-                        "longitud": geo.get("longitud"),
-                        "created_at": geo.get("created_at"),
-                        "edited_at": geo.get("edited_at"),
-                    }
-
-                    geo_obj, creado = GeoORM.objects.update_or_create(
-                        pro=proyecto_obj,
-                        defaults=defaults_geo
-                    )
-
-                    geo_resultado.append({
-                        "pro_id": geo_obj.pro.pro_id if geo_obj.pro else None,
-                        "latitud": geo_obj.latitud,
-                        "longitud": geo_obj.longitud,
-                        "created_at": geo_obj.created_at,
-                        "edited_at": geo_obj.edited_at,
-                    })
+                geo_resultado = self._guardar_geo(geo_data)
 
                 # --- Guardar/actualizar medio_ambiente relacionados ---
-                medio_ambiente_resultado = []
-                # Normalización robusta
-                if isinstance(medio_ambiente_data, dict):
-                    medio_ambiente_data = [medio_ambiente_data]  # Asegura que medio_ambiente_data sea una lista de diccionarios
-                elif not isinstance(medio_ambiente_data, list):
-                    medio_ambiente_data = []
-
-                for mamb in medio_ambiente_data:
-                    if not isinstance(mamb, dict):
-                        continue
-                    mamb_id = mamb.get("mamb_id")
-                    pro_id = mamb.get("pro_id")
-                    proyecto_obj = None
-                    if pro_id is not None:
-                        try:
-                            proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
-                        except ProyectoORM.DoesNotExist:
-                            proyecto_obj = None
-
-                    defaults_mamb = {
-                        "mamb_emp_pres_proyecto": mamb.get("mamb_emp_pres_proyecto"),
-                        "mamb_tipo_proyecto": mamb.get("mamb_tipo_proyecto"),
-                        "mamb_fecha_presentacion": mamb.get("mamb_fecha_presentacion"),
-                        "mamb_contacto": mamb.get("mamb_contacto"),
-                        "mamb_plazo_evaluacion": mamb.get("mamb_plazo_evaluacion"),
-                        "mamb_dias_legales": mamb.get("mamb_dias_legales"),
-                        "mamb_dias_totales": mamb.get("mamb_dias_totales"),
-                        "esea_id": mamb.get("esea_id"),
-                        "ppro_id": mamb.get("ppro_id"),
-                        "pro": proyecto_obj,
-                        "mamb_enlace_sea": mamb.get("mamb_enlace_sea"),
-                        "is_history": mamb.get("is_history"),
-                        "is_deleted": mamb.get("is_deleted"),
-                        "mamb_fecha_calificacion": mamb.get("mamb_fecha_calificacion"),
-                        "mamb_descripcion": mamb.get("mamb_descripcion"),
-                    }
-
-                    mamb_obj, creado = MedioAmbienteORM.objects.update_or_create(
-                        mamb_id=mamb_id,
-                        defaults=defaults_mamb
-                    )
-
-                    medio_ambiente_resultado.append({
-                        "mamb_id": mamb_obj.mamb_id,
-                        "pro_id": mamb_obj.pro.pro_id if mamb_obj.pro else None,
-                        "mamb_emp_pres_proyecto": mamb_obj.mamb_emp_pres_proyecto,
-                        "mamb_tipo_proyecto": mamb_obj.mamb_tipo_proyecto,
-                        "mamb_fecha_presentacion": mamb_obj.mamb_fecha_presentacion,
-                        "mamb_contacto": mamb_obj.mamb_contacto,
-                        "mamb_plazo_evaluacion": mamb_obj.mamb_plazo_evaluacion,
-                        "mamb_dias_legales": mamb_obj.mamb_dias_legales,
-                        "mamb_dias_totales": mamb_obj.mamb_dias_totales,
-                        "esea_id": mamb_obj.esea_id,
-                        "ppro_id": mamb_obj.ppro_id,
-                        "mamb_enlace_sea": mamb_obj.mamb_enlace_sea,
-                        "is_history": mamb_obj.is_history,
-                        "is_deleted": mamb_obj.is_deleted,
-                        "mamb_fecha_calificacion": mamb_obj.mamb_fecha_calificacion,
-                        "mamb_descripcion": mamb_obj.mamb_descripcion,
-                    })
+                medio_ambiente_resultado = self._guardar_medio_ambiente(medio_ambiente_data)
 
                 # reconstruye el objeto en el mismo formato que enviaste desde post y lo devuelve  igual.
                 item["tbl_proyecto"] = proyecto_data
@@ -728,6 +214,8 @@ class ProyectoViewSet(viewsets.ViewSet):
                 item["tbl_descripcion"] = descripciones_resultado
                 item["tbl_empleo"] = empleos_resultado
                 item["tbl_etapas_proyecto"] = etapas_resultado
+                item["tbl_geo"] = geo_resultado
+                item["tbl_medio_ambiente"] = medio_ambiente_resultado
                 
                 item["status"] = "creado" if creado else "actualizado"
 
@@ -743,6 +231,489 @@ class ProyectoViewSet(viewsets.ViewSet):
         return Response({"error": str(e)}, status=500)
 
 
+    def _guardar_equipos(self, equipos_data, proyecto_obj):
+        equipos_resultados = []
+        for equipo in equipos_data:
+            lieq_id = equipo.get("lieq_id")
+            defaults_equipo = {
+                "quantity": equipo.get("quantity"),
+                "created_at": equipo.get("created_at"),
+                "edited_at": equipo.get("edited_at"),
+            }
+            equipo_obj, _ = RelListadoEquiposDescripcionORM.objects.update_or_create(
+                lieq_id=lieq_id,
+                pro=proyecto_obj,
+                defaults=defaults_equipo
+            )
+            equipos_resultados.append({
+                "lieq_id": equipo_obj.lieq_id,
+                "pro_id": proyecto_obj.pro_id,
+                "quantity": equipo_obj.quantity,
+                "created_at": equipo_obj.created_at,
+                "edited_at": equipo_obj.edited_at,
+            })
+        return equipos_resultados
+
+    def _guardar_obras(self, obras_data, proyecto_obj):
+        obras_resultados = []
+        for obra in obras_data:
+            liob_id = obra.get("liob_id")
+            defaults_obra = {
+                "created_at": obra.get("created_at"),
+                "edited_at": obra.get("edited_at"),
+            }
+            obra_obj, _ = RelListadoObrasDescripcionORM.objects.update_or_create(
+                liob_id=liob_id,
+                pro=proyecto_obj,
+                defaults=defaults_obra
+            )
+            obras_resultados.append({
+                "liob_id": obra_obj.liob_id,
+                "pro_id": proyecto_obj.pro_id,
+                "created_at": obra_obj.created_at,
+                "edited_at": obra_obj.edited_at,
+            })
+        return obras_resultados
+
+    def _guardar_productos(self, obras_productos, proyecto_obj):
+        producto_resultado = []
+        for obra in obras_productos:
+            prop_id = obra.get("prop_id")
+            defaults_producto = {
+                "prop_descripcion": obra.get("prop_descripcion"),
+                "prop_cantidad": obra.get("prop_cantidad"),
+                "pro": proyecto_obj,
+                "prod_id": obra.get("prod_id"),
+                "created_at": obra.get("created_at"),
+                "edited_at": obra.get("edited_at"),
+            }
+            producto_obj, _ = RelProductoProyectoORM.objects.update_or_create(
+                prop_id=prop_id,
+                defaults=defaults_producto
+            )
+            producto_resultado.append({
+                "prop_id": producto_obj.prop_id,
+                "pro_id": proyecto_obj.pro_id,
+                "prod_id": producto_obj.prod.prod_id,
+                "prop_descripcion": producto_obj.prop_descripcion,
+                "prop_cantidad": producto_obj.prop_cantidad,
+                "created_at": producto_obj.created_at,
+                "edited_at": producto_obj.edited_at,
+            })
+        return producto_resultado
+    
+    def _guardar_bitacoras(self, bitacoras_data, proyecto_obj):
+        bitacoras_resultado = []
+        for bitacora in bitacoras_data:
+            bita_id = bitacora.get("bita_id")
+            defaults_bitacora = {
+                "bita_inversion": bitacora.get("bita_inversion"),
+                "bita_cronograma": bitacora.get("bita_cronograma"),
+                "bita_estado_sea": bitacora.get("bita_estado_sea"),
+                "bita_otros": bitacora.get("bita_otros"),
+                "pro": proyecto_obj,
+                "is_deleted": bitacora.get("is_deleted"),
+                "created_at": bitacora.get("created_at"),
+                "edited_at": bitacora.get("edited_at"),
+                "user_created_at": bitacora.get("user_created_at"),
+                "user_edited_at": bitacora.get("user_edited_at"),
+            }
+            bitacora_obj, _ = BitacorasORM.objects.update_or_create(
+                bita_id=bita_id,
+                defaults=defaults_bitacora
+            )
+            bitacoras_resultado.append({
+                "bita_id": bitacora_obj.bita_id,
+                "pro_id": proyecto_obj.pro_id,
+                "bita_inversion": bitacora_obj.bita_inversion,
+                "bita_cronograma": bitacora_obj.bita_cronograma,
+                "bita_estado_sea": bitacora_obj.bita_estado_sea,
+                "bita_otros": bitacora_obj.bita_otros,
+                "is_deleted": bitacora_obj.is_deleted,
+                "created_at": bitacora_obj.created_at,
+                "edited_at": bitacora_obj.edited_at,
+                "user_created_at": bitacora_obj.user_created_at,
+                "user_edited_at": bitacora_obj.user_edited_at,
+            })
+        return bitacoras_resultado
+
+    def _guardar_contactos_proyecto(self, contacto_proyecto_data, obtener_instancia_fk):
+        contactos_proyecto_resultado = []
+        for contacto in contacto_proyecto_data:
+            copr_id = contacto.get("copr_id")
+            empr_id = contacto.get("empr_id")
+            cont_id = contacto.get("cont_id")
+            pro_id = contacto.get("pro_id")
+
+            empresa_obj = obtener_instancia_fk('empresa', empr_id)
+            proyecto_fk_obj = obtener_instancia_fk('proyecto', pro_id)
+            contacto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_fk_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_fk_obj = None
+            if cont_id is not None:
+                try:
+                    contacto_obj = ContactosORM.objects.get(pk=cont_id)
+                except ContactosORM.DoesNotExist:
+                    contacto_obj = None
+
+            if proyecto_fk_obj is None:
+                contacto_resultado = contacto.copy()
+                contacto_resultado["status"] = "error"
+                contacto_resultado["detalle"] = f"No existe ProyectoORM con pro_id={pro_id}"
+                contactos_proyecto_resultado.append(contacto_resultado)
+                continue
+
+            defaults_contacto = {
+                "empr": empresa_obj,
+                "cont": contacto_obj,
+                "copr_tipo": contacto.get("copr_tipo"),
+                "copr_desc": contacto.get("copr_desc"),
+                "pro": proyecto_fk_obj,
+                "created_at": contacto.get("created_at"),
+                "edited_at": contacto.get("edited_at"),
+            }
+
+            contacto_obj,_ = ContactoProyectoORM.objects.update_or_create(
+                copr_id=copr_id,
+                defaults=defaults_contacto
+            )
+
+            contactos_proyecto_resultado.append({
+                "copr_id": contacto_obj.copr_id,
+                "empr_id": contacto_obj.empr.empr_id if contacto_obj.empr else None,
+                "cont_id": contacto_obj.cont.cont_id if contacto_obj.cont else None,
+                "copr_tipo": contacto_obj.copr_tipo,
+                "copr_desc": contacto_obj.copr_desc,
+                "pro_id": contacto_obj.pro.pro_id if contacto_obj.pro else None,
+                "created_at": contacto_obj.created_at,
+                "edited_at": contacto_obj.edited_at,
+            })
+        return contactos_proyecto_resultado
+  
+    def _guardar_cronogramas(self, cronogramas_data):
+        def get_contacto_obj(cont_id):
+            if cont_id is None:
+                return None
+            try:
+                return ContactosORM.objects.get(pk=cont_id)
+            except ContactosORM.DoesNotExist:
+                return None
+
+        def get_proyecto_obj(pro_id):
+            if pro_id is None:
+                return None
+            try:
+                return ProyectoORM.objects.get(pk=pro_id)
+            except ProyectoORM.DoesNotExist:
+                return None
+
+        cronogramas_resultado = []
+        for cronograma in cronogramas_data:
+            cron_id = cronograma.get("cron_id")
+            cont_id = cronograma.get("cont_id")
+            pro_id = cronograma.get("pro_id")
+
+            contacto_obj = get_contacto_obj(cont_id)
+            proyecto_obj = get_proyecto_obj(pro_id)
+
+            defaults_cronograma = {
+                "cont": contacto_obj,
+                "tiob_id": cronograma.get("tiob_id"),
+                "cron_obs": cronograma.get("cron_obs"),
+                "cron_etapa": cronograma.get("cron_etapa"),
+                "pro": proyecto_obj,
+                "created_at": cronograma.get("created_at"),
+                "edited_at": cronograma.get("edited_at"),
+            }
+
+            cronograma_obj, _ = CronogramaORM.objects.update_or_create(
+                cron_id=cron_id,
+                defaults=defaults_cronograma
+            )
+
+            cronogramas_resultado.append({
+                "cron_id": cronograma_obj.cron_id,
+                "cont_id": cronograma_obj.cont.cont_id if cronograma_obj.cont else None,
+                "tiob_id": cronograma_obj.tiob_id,
+                "cron_obs": cronograma_obj.cron_obs,
+                "cron_etapa": cronograma_obj.cron_etapa,
+                "pro_id": cronograma_obj.pro.pro_id if cronograma_obj.pro else None,
+                "created_at": cronograma_obj.created_at,
+                "edited_at": cronograma_obj.edited_at,
+            })
+        return cronogramas_resultado
+
+    def _guardar_descripciones(self, descripcion_data):
+        descripciones_resultado = []
+        # Normalización robusta
+        if isinstance(descripcion_data, dict):
+            descripcion_data = [descripcion_data]
+        elif not isinstance(descripcion_data, list):
+            descripcion_data = []
+
+        for descripcion in descripcion_data:
+            desc_id = descripcion.get("desc_id")
+            pro_id = descripcion.get("pro_id")
+
+            # Instanciar ForeignKey de proyecto
+            proyecto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_obj = None
+
+            defaults_descripcion = {
+                "desc_objetivo": descripcion.get("desc_objetivo"),
+                "desc_resumen": descripcion.get("desc_resumen"),
+                "pro": proyecto_obj,
+                "is_deleted": descripcion.get("is_deleted"),
+                "created_at": descripcion.get("created_at"),
+                "edited_at": descripcion.get("edited_at"),
+                "desc_ubicacion": descripcion.get("desc_ubicacion"),
+                "desc_vidautil": descripcion.get("desc_vidautil"),
+                "desc_obras": descripcion.get("desc_obras"),
+            }
+
+            descripcion_obj, _ = DescripcionORM.objects.update_or_create(
+                desc_id=desc_id,
+                defaults=defaults_descripcion
+            )
+
+            descripciones_resultado.append({
+                "desc_id": descripcion_obj.desc_id,
+                "desc_objetivo": descripcion_obj.desc_objetivo,
+                "desc_resumen": descripcion_obj.desc_resumen,
+                "pro_id": descripcion_obj.pro.pro_id if descripcion_obj.pro else None,
+                "is_deleted": descripcion_obj.is_deleted,
+                "created_at": descripcion_obj.created_at,
+                "edited_at": descripcion_obj.edited_at,
+                "desc_ubicacion": descripcion_obj.desc_ubicacion,
+                "desc_vidautil": descripcion_obj.desc_vidautil,
+                "desc_obras": descripcion_obj.desc_obras,
+            })
+        return descripciones_resultado
+    
+    def _guardar_empleos(self, empleos_data):
+        empleos_resultado = []
+        # Normalización robusta
+        if isinstance(empleos_data, dict):
+            empleos_data = [empleos_data]
+        elif not isinstance(empleos_data, list):
+            empleos_data = []
+
+        for empleo in empleos_data:
+            if not isinstance(empleo, dict):
+                continue  # Salta elementos que no sean dict
+            pro_id = empleo.get("pro_id")
+
+            # Instanciar ForeignKey de proyecto
+            proyecto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_obj = None
+
+            defaults_empleo = {
+                "emp_con_nocal": empleo.get("emp_con_nocal"),
+                "emp_con_profe": empleo.get("emp_con_profe"),
+                "emp_con_tec": empleo.get("emp_con_tec"),
+                "emp_con_total": empleo.get("emp_con_total"),
+                "emp_con_nocal_peak": empleo.get("emp_con_nocal_peak"),
+                "emp_con_profe_peak": empleo.get("emp_con_profe_peak"),
+                "emp_con_tec_peak": empleo.get("emp_con_tec_peak"),
+                "emp_con_total_peak": empleo.get("emp_con_total_peak"),
+                "emp_ope_nocal": empleo.get("emp_ope_nocal"),
+                "emp_ope_profe": empleo.get("emp_ope_profe"),
+                "emp_ope_tec": empleo.get("emp_ope_tec"),
+                "emp_ope_total": empleo.get("emp_ope_total"),
+                "emp_ope_nocal_peak": empleo.get("emp_ope_nocal_peak"),
+                "emp_ope_profe_peak": empleo.get("emp_ope_profe_peak"),
+                "emp_ope_tec_peak": empleo.get("emp_ope_tec_peak"),
+                "emp_ope_total_peak": empleo.get("emp_ope_total_peak"),
+            }
+
+            empleo_obj, _ = EmpleoORM.objects.update_or_create(
+                pro=proyecto_obj,
+                defaults=defaults_empleo
+            )
+
+            empleos_resultado.append({
+                "pro_id": empleo_obj.pro.pro_id if empleo_obj.pro else None,
+                "emp_con_nocal": empleo_obj.emp_con_nocal,
+                "emp_con_profe": empleo_obj.emp_con_profe,
+                "emp_con_tec": empleo_obj.emp_con_tec,
+                "emp_con_total": empleo_obj.emp_con_total,
+                "emp_con_nocal_peak": empleo_obj.emp_con_nocal_peak,
+                "emp_con_profe_peak": empleo_obj.emp_con_profe_peak,
+                "emp_con_tec_peak": empleo_obj.emp_con_tec_peak,
+                "emp_con_total_peak": empleo_obj.emp_con_total_peak,
+                "emp_ope_nocal": empleo_obj.emp_ope_nocal,
+                "emp_ope_profe": empleo_obj.emp_ope_profe,
+                "emp_ope_tec": empleo_obj.emp_ope_tec,
+                "emp_ope_total": empleo_obj.emp_ope_total,
+                "emp_ope_nocal_peak": empleo_obj.emp_ope_nocal_peak,
+                "emp_ope_profe_peak": empleo_obj.emp_ope_profe_peak,
+                "emp_ope_tec_peak": empleo_obj.emp_ope_tec_peak,
+                "emp_ope_total_peak": empleo_obj.emp_ope_total_peak,
+            })
+        return empleos_resultado
+    
+    def _guardar_etapas(self, etapas_data):
+        etapas_resultado = []
+        # Normalización robusta
+        if isinstance(etapas_data, dict):
+            etapas_data = [etapas_data]
+        elif not isinstance(etapas_data, list):
+            etapas_data = []
+
+        for etapa in etapas_data:
+            if not isinstance(etapa, dict):
+                continue
+            pro_id = etapa.get("pro_id")
+            proyecto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_obj = None
+
+            defaults_etapa = {
+                "ing_conc_inicio": etapa.get("ing_conc_inicio"),
+                "ing_conc_fin": etapa.get("ing_conc_fin"),
+                "ing_basica_inicio": etapa.get("ing_basica_inicio"),
+                "ing_basica_fin": etapa.get("ing_basica_fin"),
+                "ing_detalle_inicio": etapa.get("ing_detalle_inicio"),
+                "ing_detalle_fin": etapa.get("ing_detalle_fin"),
+                "cons_inicio": etapa.get("cons_inicio"),
+                "cons_fin": etapa.get("cons_fin"),
+            }
+
+            etapa_obj, _ = EtapasProyectoORM.objects.update_or_create(
+                pro=proyecto_obj,
+                defaults=defaults_etapa
+            )
+
+            etapas_resultado.append({
+                "pro_id": etapa_obj.pro.pro_id if etapa_obj.pro else None,
+                "ing_conc_inicio": etapa_obj.ing_conc_inicio,
+                "ing_conc_fin": etapa_obj.ing_conc_fin,
+                "ing_basica_inicio": etapa_obj.ing_basica_inicio,
+                "ing_basica_fin": etapa_obj.ing_basica_fin,
+                "ing_detalle_inicio": etapa_obj.ing_detalle_inicio,
+                "ing_detalle_fin": etapa_obj.ing_detalle_fin,
+                "cons_inicio": etapa_obj.cons_inicio,
+                "cons_fin": etapa_obj.cons_fin,
+            })
+        return etapas_resultado
+    
+    def _guardar_geo(self, geo_data):
+        geo_resultado = []
+        # Normalización robusta
+        if isinstance(geo_data, dict):
+            geo_data = [geo_data]
+        elif not isinstance(geo_data, list):
+            geo_data = []
+
+        for geo in geo_data:
+            if not isinstance(geo, dict):
+                continue
+            pro_id = geo.get("pro_id")
+            proyecto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_obj = None
+
+            defaults_geo = {
+                "latitud": geo.get("latitud"),
+                "longitud": geo.get("longitud"),
+                "created_at": geo.get("created_at"),
+                "edited_at": geo.get("edited_at"),
+            }
+
+            geo_obj, _ = GeoORM.objects.update_or_create(
+                pro=proyecto_obj,
+                defaults=defaults_geo
+            )
+
+            geo_resultado.append({
+                "pro_id": geo_obj.pro.pro_id if geo_obj.pro else None,
+                "latitud": geo_obj.latitud,
+                "longitud": geo_obj.longitud,
+                "created_at": geo_obj.created_at,
+                "edited_at": geo_obj.edited_at,
+            })
+        return geo_resultado
+    
+    def _guardar_medio_ambiente(self, medio_ambiente_data):
+        medio_ambiente_resultado = []
+        # Normalización robusta
+        if isinstance(medio_ambiente_data, dict):
+            medio_ambiente_data = [medio_ambiente_data]
+        elif not isinstance(medio_ambiente_data, list):
+            medio_ambiente_data = []
+
+        for mamb in medio_ambiente_data:
+            if not isinstance(mamb, dict):
+                continue
+            mamb_id = mamb.get("mamb_id")
+            pro_id = mamb.get("pro_id")
+            proyecto_obj = None
+            if pro_id is not None:
+                try:
+                    proyecto_obj = ProyectoORM.objects.get(pk=pro_id)
+                except ProyectoORM.DoesNotExist:
+                    proyecto_obj = None
+
+            defaults_mamb = {
+                "mamb_emp_pres_proyecto": mamb.get("mamb_emp_pres_proyecto"),
+                "mamb_tipo_proyecto": mamb.get("mamb_tipo_proyecto"),
+                "mamb_fecha_presentacion": mamb.get("mamb_fecha_presentacion"),
+                "mamb_contacto": mamb.get("mamb_contacto"),
+                "mamb_plazo_evaluacion": mamb.get("mamb_plazo_evaluacion"),
+                "mamb_dias_legales": mamb.get("mamb_dias_legales"),
+                "mamb_dias_totales": mamb.get("mamb_dias_totales"),
+                "esea_id": mamb.get("esea_id"),
+                "ppro_id": mamb.get("ppro_id"),
+                "pro": proyecto_obj,
+                "mamb_enlace_sea": mamb.get("mamb_enlace_sea"),
+                "is_history": mamb.get("is_history"),
+                "is_deleted": mamb.get("is_deleted"),
+                "mamb_fecha_calificacion": mamb.get("mamb_fecha_calificacion"),
+                "mamb_descripcion": mamb.get("mamb_descripcion"),
+            }
+
+            mamb_obj, _ = MedioAmbienteORM.objects.update_or_create(
+                mamb_id=mamb_id,
+                defaults=defaults_mamb
+            )
+
+            medio_ambiente_resultado.append({
+                "mamb_id": mamb_obj.mamb_id,
+                "pro_id": mamb_obj.pro.pro_id if mamb_obj.pro else None,
+                "mamb_emp_pres_proyecto": mamb_obj.mamb_emp_pres_proyecto,
+                "mamb_tipo_proyecto": mamb_obj.mamb_tipo_proyecto,
+                "mamb_fecha_presentacion": mamb_obj.mamb_fecha_presentacion,
+                "mamb_contacto": mamb_obj.mamb_contacto,
+                "mamb_plazo_evaluacion": mamb_obj.mamb_plazo_evaluacion,
+                "mamb_dias_legales": mamb_obj.mamb_dias_legales,
+                "mamb_dias_totales": mamb_obj.mamb_dias_totales,
+                "esea_id": mamb_obj.esea_id,
+                "ppro_id": mamb_obj.ppro_id,
+                "mamb_enlace_sea": mamb_obj.mamb_enlace_sea,
+                "is_history": mamb_obj.is_history,
+                "is_deleted": mamb_obj.is_deleted,
+                "mamb_fecha_calificacion": mamb_obj.mamb_fecha_calificacion,
+                "mamb_descripcion": mamb_obj.mamb_descripcion,
+            })
+        return medio_ambiente_resultado
+    
     #Listar proyectos por sector económico usando slug
     @action(detail=False, methods=['get'], url_path='sector-economico/(?P<parametro>[^/.]+)')
     def listar_por_sector_economico(self, request, parametro=None):
